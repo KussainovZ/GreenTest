@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZK test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; display: flex; }
+        .container { display: flex; flex-direction: column; width: 300px; }
+        input, button { width: 100%; margin-bottom: 5px; padding: 5px; }
+        textarea { width: 300px; height: 200px; padding: 5px; }
+        .response-container { margin-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <input type="text" id="idInstance" placeholder="IDInstance">
+        <input type="text" id="apiTokenInstance" placeholder="APITokenInstance">
+        
+        <button onclick="getSettings()">GetSettings</button>
+        <button onclick="getStateInstance()">getStateInstance</button>
+        
+        <input type="text" id="phoneNumber" placeholder="Введите номер телефона">
+        <input type="text" id="message" placeholder="Введите текст">
+        <button onclick="sendMessage()">SendMessage</button>
+        
+        <input type="text" id="filePhoneNumber" placeholder="Введите номер телефона">
+        <input type="text" id="fileUrl" placeholder="Введите URL страницы">
+        <button onclick="sendFileByUrl()">sendFileByUrl</button>
+    </div>
+    
+    <div class="response-container">
+        <h3>Ответ:</h3>
+        <textarea id="response" readonly></textarea>
+    </div>
+    
+    <script>
+        async function apiRequest(method, endpoint, body = null) {
+            const idInstance = document.getElementById('idInstance').value;
+            const apiTokenInstance = document.getElementById('apiTokenInstance').value;
+            if (!idInstance || !apiTokenInstance) {
+                alert("Введите ID Instance и API Token Instance");
+                return;
+            }
+            
+            const url = `https://api.green-api.com/waInstance${idInstance}/${endpoint}/${apiTokenInstance}`;
+            
+            const options = {
+                method: method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+            
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                document.getElementById('response').value = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('response').value = 'Ошибка запроса';
+            }
+        }
+        
+        function getSettings() { apiRequest('GET', 'getSettings'); }
+        function getStateInstance() { apiRequest('GET', 'getStateInstance'); }
+        function sendMessage() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const message = document.getElementById('message').value;
+            if (phoneNumber && message) {
+                const body = { chatId: `${phoneNumber}@c.us`, message: message };
+                apiRequest('POST', 'sendMessage', body);
+            }
+        }
+        function sendFileByUrl() {
+            const phoneNumber = document.getElementById('filePhoneNumber').value;
+            const fileUrl = document.getElementById('fileUrl').value;
+            if (phoneNumber && fileUrl) {
+                const body = { chatId: `${phoneNumber}@c.us`, urlFile: fileUrl, fileName: fileUrl.split('/').pop() };
+                apiRequest('POST', 'sendFileByUrl', body);
+            }
+        }
+    </script>
+</body>
+</html>
